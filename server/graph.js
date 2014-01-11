@@ -1,3 +1,35 @@
+var socket = io.connect('http://localhost');
+      socket.on('serviceconfig', function (data) {
+      console.log(data);
+      nodesList[data.service_name] = {name:data.service_name};
+      data.clients.forEach(function(x){
+        var service_name = x.service_name;
+        console.log(service_name);
+        nodesList[service_name] = {name:x.service_name}
+        // if(edgesList[data.service_name]===undefined)
+        //   edgesList[data.service_name] = {}
+        // edgesList[data.service_name][service_name] = {directed: true};
+        globalRend.addEdge(data.service_name, service_name, { directed: true, weight:3 });
+        console.log(edgesList[data.service_name]);
+      });
+      globalRend.graft({
+        nodes : nodesList, 
+        edges : edgesList 
+      });
+      globalRend.renderer.redraw();
+    });
+
+nodesList = { ShorturiService:{name:"ShorturiService"},MyAddressService:{name:"MyAddressService"},DumbService:{name:"DumbService"},JohnService:{alone:true,name:"JohnService"},JackService:{name:"JackService"}};
+edgesList = {
+        ShorturiService:{ MyAddressService:{directed: true, weight:3 },
+            DumbService:{directed: true},
+            JohnService:{directed: true},
+            JackService:{directed: true}
+        }
+      };
+    
+var globalRend;
+
 (function($){
 
   var Renderer = function(canvas){
@@ -123,23 +155,15 @@
 
   $(document).ready(function(){
     var sys = arbor.ParticleSystem(1000, 600, 0.5) // create the system with sensible repulsion/stiffness/friction
+    globalRend = sys;
     sys.parameters({gravity:true}) // use center-gravity to make the graph settle nicely (ymmv)
     sys.renderer = Renderer("#viewport") // our newly created renderer will have its .init() method called shortly by sys...
 
     // or, equivalently:
     //
     sys.graft({
-      nodes:{
-        a:{name:"ShorturiService"},b:{name:"MyAddressService"},c:{name:"DumbService"},d:{alone:true,name:"JohnService"},e:{name:"JackService"},f:{name:"FreakingService"}
-      }, 
-      edges:{
-        a:{ b:{},
-            c:{},
-            d:{},
-            e:{}
-        }
-      }
-    })
+      nodes : nodesList, 
+      edges : edgesList})
     
   })
 

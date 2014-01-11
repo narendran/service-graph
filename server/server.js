@@ -1,4 +1,13 @@
-var express = require("express"), app = express(), io = require('socket.io').listen(app), fs = require('fs'), neo4j = require('neo4j'), redis = require('redis')
+var express = require("express"), app = express(), fs = require('fs'), neo4j = require('neo4j'), redis = require('redis'), http = require('http')
+var server = http.createServer(app), io = require('socket.io').listen(server);
+
+var globalIOSocket;
+// Talks to websocket on client side
+io.sockets.on('connection', function (socket) {
+		// socket.emit('serviceconfig', { hello: 'world' });
+		globalIOSocket = socket;
+	});
+
 
 // MongoDB connection variables
 var MongoClient = require('mongodb').MongoClient, format = require('util').format;
@@ -12,13 +21,14 @@ client_sc.on("message", function (channel, message) {
 	    var collection = db.collection('serviceconfigs');
 	    msgJson = JSON.parse(message)	
 		collection.insert({'serviceName':msgJson.serviceName, 'version' : msgJson.version, 'clients' : msgJson.clients}, function(){}); // Inserting the ramble and the time when the ramble was rambled! :D
+		globalIOSocket.emit('serviceconfig', msgJson);
 	});
 });
 client_sc.subscribe("serviceconfig");
 
 var graphdb = new neo4j.GraphDatabase('http://localhost:7474');
 
-app.listen(80);
+server.listen(80);
 
 app.configure(function(){
   app.use(express.static(__dirname + '/'));
@@ -54,9 +64,3 @@ app.get("/", function handler (req, res) {
 	}
 });
 
-// io.sockets.on('connection', function (socket) {
-// 	socket.emit('news', { hello: 'world' });
-// 	socket.on('my other event', function (data) {
-// 		console.log(data);
-// 	});
-// });
