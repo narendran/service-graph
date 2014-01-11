@@ -1,5 +1,9 @@
 {
   "service_name": "BazService",
-  "port": 3503,
+  "addr": {
+    "dc": "sd",
+    "host": "sd11",
+    "port": 3503
+  },
   "clients": []
 }

@@ -1,16 +1,29 @@
 {
   "service_name": "BarService",
   "port": 3502,
+  "addr": {
+    "dc": "sf",
+    "host": "sf02",
+    "port": 3502
+  },
   "clients": [
     {
       "client_name": "foo1",
       "service_name": "FooService",
-      "url": "localhost:3501"
+      "addr": {
+        "dc": "atl",
+        "host": "atl09",
+        "port": 3501
+      }
     },
     {
       "client_name": "baz1",
       "service_name": "BazService",
-      "url": "localhost:3503"
+      "addr": {
+        "dc": "sd",
+        "host": "sd11",
+        "port": 3503
+      }
     }
   ]
 }

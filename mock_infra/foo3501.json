@@ -1,5 +1,9 @@
 {
   "service_name": "FooService",
-  "port": 3501,
+  "addr": {
+    "dc": "atl",
+    "host": "atl09",
+    "port": 3501
+  },
   "clients": []
 }
