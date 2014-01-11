@@ -252,15 +252,15 @@ app.get('/metrics/service/:service/dcs', function(req, res) {
       },
       {'fields': ['instance']},
       function(err, cursor) {
-        cursor.toArray(function(err, clients) {
-          var uniq_clients = (clients.map(function(x) {
+        cursor.toArray(function(err, dcs) {
+          var uniq_dcs = (dcs.map(function(x) {
             return x['instance'].split('/')[0];
           })
           .filter(function(elem, index, self) {
             return self.indexOf(elem) == index;
           }));
 
-          res.end(JSON.stringify(uniq_clients));
+          res.end(JSON.stringify(uniq_dcs));
         });
       });
     });
