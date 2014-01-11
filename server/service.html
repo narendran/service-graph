@@ -67,6 +67,8 @@ h2 {
 </div>
       <hr>
 <h2> Client Level Breakup </h2>
+<div id="cli-container">
+</div>
 <hr>
 </body>
 
@@ -151,82 +153,32 @@ $.getJSON( "/metrics/service/"+getParameterByName('SERVICE') + "/dcs",
     });
 });
 
-/*
-$.getJSON( "/metrics/service/"+getParameterByName('SERVICE'), 
-	function( data ) {
-    var dp = [];
-		$.each( data, function( i, item ) {
-			dp.push(item);
-		});
-		console.log(dp);
-		 $('#dc1-container').highcharts({
-            chart: {
-                type: 'line'
-            },
-            series: [ {
-                name: getParameterByName('SERVICE'),
-                data: dp
-            }]
-        });
-	});
+$.getJSON( "/metrics/service/"+getParameterByName('SERVICE') + "/clients",
+	function( clients ) {
+    $.each(clients, function(i, item) {
+      var client = item['client'];
+      console.log("<div class='cli" + (i + 1) + "-container'></div>");
+      $("#cli-container").append("<div class='col-md-6' id='cli" + (i + 1) + "-container'></div>");
 
-$.getJSON( "/metrics/service/"+getParameterByName('SERVICE'), 
-	function( data ) {
-    var dp = [];
-		$.each( data, function( i, item ) {
-			dp.push(item);
-		});
-		console.log(dp);
-		 $('#dc2-container').highcharts({
-            chart: {
-                type: 'line'
-            },
-            series: [ {
-                name: getParameterByName('SERVICE'),
-                data: dp
-            }]
-        });
-	});
-
-$.getJSON( "/metrics/service/"+getParameterByName('SERVICE'), 
-	function( data ) {
-    var dp = [];
-		$.each( data, function( i, item ) {
-			dp.push(item);
-		});
-		console.log(dp);
-		 $('#dc3-container').highcharts({
-            chart: {
-                type: 'line'
-            },
-            series: [ {
-                name: getParameterByName('SERVICE'),
-                data: dp
-            }]
-        });
-	});
-
-$.getJSON( "/metrics/service/"+getParameterByName('SERVICE'), 
-	function( data ) {
-    var dp = [];
-		$.each( data, function( i, item ) {
-			dp.push(item);
-		});
-		console.log(dp);
-		 $('#dc4-container').highcharts({
-            chart: {
-                type: 'line'
-            },
-            series: [ {
-                name: getParameterByName('SERVICE'),
-                data: dp
-            }]
-        });
-	});
-
-*/
-$(function () {
-       
+      $.getJSON( "/metrics/service/"+getParameterByName('SERVICE') + "/client/" + client,
+        function( data ) {
+          console.log(data);
+          var dp = [];
+          $.each( data, function( i, item ) {
+            dp.push(item);
+          });
+           $('#cli' + (i + 1) + '-container').highcharts({
+                  chart: {
+                      type: 'line'
+                  },
+                  series: [ {
+                      name: getParameterByName('SERVICE') + ' on ' + client,
+                      data: dp
+                  }]
+              });
+      });
     });
+});
+
 </script>
 </html>
