@@ -6,7 +6,7 @@ var jsonfile = require('jsonfile');
 var http = require('http');
 var Futures = require('futures');
 
-var STATS_REFRESH_INTERVAL_MSEC = 10000;
+var STATS_REFRESH_INTERVAL_MSEC = 2000;
 var CHANNEL_SERVICECONFIG = 'serviceconfig';
 var CHANNEL_SERVICESTATE = 'servicestats';
 var CHANNEL_CLIENTSTATS = 'clientstats';
@@ -24,7 +24,7 @@ if (process.argv.length < 3) {
 
 configFile = __dirname + '/' + process.argv[2];
 config = jsonfile.readFileSync(configFile);
-config.port = config.port || 3000;
+config.port = config.addr.port || 3000;
 config.clients = config.clients || [];
 
 console.log(config);
@@ -32,6 +32,7 @@ console.log(config);
 var mqClient = redis.createClient(null, '137.110.52.123');
 
 var ownStats = {
+  'instance': getHierAddr(config.addr),
   'service': config.service_name,
   'calls': 0,
   'total_resp_ms': 0,
@@ -39,8 +40,16 @@ var ownStats = {
   'avg_resp_ms': 0
 };
 
-var childStats = {};
+var clientStats = [];
 var logEntries = [];
+
+function getHierAddr(addr) {
+  return addr.dc + '/' + getPQDN(addr);
+}
+
+function getPQDN(addr) {
+  return addr.host + ':' + addr.port;
+}
 
 function purgeOldLogs() {
   var currentTime = new Date();
@@ -53,9 +62,19 @@ function purgeOldLogs() {
 
     ownStats.calls --;
     ownStats.total_resp_ms -= logEntry.resp_ms;
-    ownStats.errors -= logEntry.error;
+    ownStats.errors -= logEntry.errors;
 
-    // TODO: Remove child stats for logEntry
+    for (var i = 0; i < logEntry.client_requests.length; i ++) {
+      var client = logEntry.client_requests[i];
+      var stat = clientStats[client.service_name];
+      if (!stat) {
+        console.error("ClientStats object not found");
+        continue;
+      }
+      stat.calls --;
+      stat.total_resp_ms -= client.resp_ms;
+      stat.errors -= client.errors;
+    }
 
     logEntries.shift();   // Remove from head of queue
   }
@@ -68,52 +87,122 @@ function statsRefresher() {
   } else {
     ownStats.avg_resp_ms = 0.0;
   }
-  console.log(ownStats);
+
+  var current_time = new Date().getTime();
+  ownStats.timestamp = current_time;
   mqClient.publish(CHANNEL_SERVICESTATE, JSON.stringify(ownStats));
+
+  for (var svc in clientStats) {
+    var stat = clientStats[svc];
+    if (stat.calls > 0) {
+      stat.avg_resp_ms = stat.total_resp_ms / stat.calls;
+    } else {
+      stat.avg_resp_ms = 0.0;
+    }
+    stat.timestamp = current_time;
+    mqClient.publish(CHANNEL_CLIENTSTATS, JSON.stringify(stat));
+  }
+
+  if (logEntries.length > 0) {
+    for (var svc in clientStats) {
+      var stat = clientStats[svc];
+      console.log(stat);
+    }
+    console.log(ownStats);
+    // console.log(logEntries);
+  }
 }
 
-function logRequest(resp_ms, child_requests, error) {
+function logRequest(resp_ms, client_requests, errors) {
   var logEntry = {
     'timestamp': new Date(),
     'resp_ms': resp_ms,
-    'children': child_requests,
-    'error': error
+    'client_requests': client_requests,
+    'errors': errors
   };
 
   logEntries.push(logEntry);
   ownStats.calls ++;
   ownStats.total_resp_ms += resp_ms;
-  ownStats.errors += error;
+  ownStats.errors += errors;
 
-  // TODO: Add child stats for logEntry
+  for (var i = 0; i < client_requests.length; i ++) {
+    var client = client_requests[i];
+    var stat = clientStats[client.service_name];
+    if (!stat) {
+      console.log(client);
+      stat = clientStats[client.service_name] = {
+        'service': client.service_name,
+        'client': config.service_name + '/' + client.client_name,
+        'service_instance': client.service_instance,
+        'client_instance': getHierAddr(config.addr),
+        'calls': 0,
+        'total_resp_ms': 0,
+        'errors': 0,
+        'avg_resp_ms': 0
+      };
+    }
+
+    stat.calls ++;
+    stat.total_resp_ms += client.resp_ms;
+    stat.errors += client.errors;
+  }
+}
+
+function handleClient(client, seq, err, op, clientReqs) {
+  var options = {
+    'hostname': client.addr.host,
+    'port': client.addr.port,
+    'path': '/' + client.service_name,
+    'method': 'GET'
+  };
+
+  var url = 'http://' + getPQDN(client.addr) + '/' + client.service_name;
+  console.log(url);
+  seq.then(function(next) {
+    var strt = new Date();
+    http.get(url, function(resp) {
+      next(resp, strt);
+    }).on('error', function(err) {
+      console.log(err);
+      next(null, strt);
+    });
+  })
+  .then(function(next, resp, prevStart) {
+    if (resp == null) {
+      next(null, prevStart);
+    } else {
+      resp.setEncoding('utf8');
+      resp.on('data', function(d) {
+        op += d;
+        next(d, prevStart);
+      });
+    }
+  })
+  .then(function(next, d, prevStart) {
+    // res.write(d);
+    console.log('Delay', new Date() - prevStart);
+    clientReqs.push({
+      'client_name': client.client_name,
+      'service_name': client.service_name,
+      'service_instance': getHierAddr(client.addr),
+      'resp_ms': new Date() - prevStart,
+      'errors': ((d == null) ? 1 : 0)
+    });
+    next(err);
+  });
 }
 
 app.get('/' + config.service_name, function(req, res) {
   var start = new Date();
   var seq = Futures.sequence.create(), err;
+
+  var clientReqs = [];
+  var op = '';
+
   for (var i = 0; i < config.clients.length; i ++) {
     var client = config.clients[i];
-    var options = {
-      'hostname': client.url.split(':')[0],
-      'port': client.url.split(':')[1],
-      'path': '/' + client.service_name,
-      'method': 'GET'
-    };
-
-    var url = 'http://' + client.url + '/' + client.service_name;
-    console.log(url);
-    seq.then(function(next) {
-      http.get(url, next);
-    })
-    .then(function(next, resp) {
-      resp.setEncoding('utf8');
-      resp.on('data', next);
-    })
-    .then(function(next, d) {
-      console.log('Here2');
-      res.write(d + '\n');
-      next(err);
-    });
+    handleClient(client, seq, err, op, clientReqs);
   }
   
   seq.then(function(next) {
@@ -124,9 +213,19 @@ app.get('/' + config.service_name, function(req, res) {
 
     var selftime = new Date() - start;
     console.log('Response time: ', selftime, 'ms');
-    logRequest(selftime, [], false);
+    logRequest(selftime, clientReqs, false);
     next();
   });
+});
+
+app.get('/quit', function(req, res) {
+  res.send('Bye');
+  process.exit();
+});
+
+app.get('/delay', function(req, res) {
+  delay = parseInt(req.query.delay) || delay;
+  res.send('Updated delay to ' + delay);
 });
 
 setInterval(statsRefresher, STATS_REFRESH_INTERVAL_MSEC);
