@@ -110,7 +110,6 @@ app.get('/' + config.service_name, function(req, res) {
       resp.on('data', next);
     })
     .then(function(next, d) {
-      console.log('Here2');
       res.write(d + '\n');
       next(err);
     });
@@ -127,6 +126,16 @@ app.get('/' + config.service_name, function(req, res) {
     logRequest(selftime, [], false);
     next();
   });
+});
+
+app.get('/quit', function(req, res) {
+  res.send('Bye');
+  process.exit();
+});
+
+app.get('/delay', function(req, res) {
+  delay = parseInt(req.query.delay) || delay;
+  res.send('Updated delay to ' + delay);
 });
 
 setInterval(statsRefresher, STATS_REFRESH_INTERVAL_MSEC);
