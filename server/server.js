@@ -203,3 +203,35 @@ app.get('/metrics/service/:service/client/:client', function(req, res) {
 
     });
 });
+
+app.get('/metrics/service/:service/clients', function(req, res) {
+    console.log(req.params.service);
+    res.writeHead(200,{'Content-Type':'application/json'});
+    //res.send('Hello world!');
+
+    MongoClient.connect('mongodb://127.0.0.1:27017/service_graph', function(err, db) {
+      var collection = db.collection('clientmetrics');
+      var timestamp24HoursAgo = new Date() - 24 * 60 * 60 * 1000;
+      collection.find({
+        'timestamp': {
+          $gte: timestamp24HoursAgo
+        },
+        'client': {
+          $regex: req.params.service + '/.*'
+        },
+      },
+      {'fields': ['client']},
+      function(err, cursor) {
+        cursor.toArray(function(err, clients) {
+          var uniq_clients = (clients.map(function(x) {
+            return x['client'];
+          })
+          .filter(function(elem, index, self) {
+            return self.indexOf(elem) == index;
+          }));
+
+          res.end(JSON.stringify(uniq_clients));
+        });
+      });
+    });
+});
