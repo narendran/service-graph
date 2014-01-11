@@ -1,13 +1,22 @@
 var express = require('express');
 var app = express();
 var sleep = require('sleep');
+var redis = require('redis');
 
 var STATS_REFRESH_INTERVAL_MSEC = 2000;
+var CHANNEL_SERVICECONFIG = 'serviceconfig';
+var CHANNEL_SERVICESTATE = 'servicestats';
+var CHANNEL_CLIENTSTATS = 'clientstats';
+var SERVICE_NAME = 'HelloService';
+
+var mqClient = redis.createClient(null, '137.110.52.123');
 
 var ownStats = {
+  'service': SERVICE_NAME,
   'calls': 0,
   'total_resp_ms': 0,
-  'errors': 0
+  'errors': 0,
+  'avg_resp_ms': 0
 };
 
 var childStats = {};
@@ -22,7 +31,7 @@ function purgeOldLogs() {
       break;
     }
 
-    ownStats.calls --
+    ownStats.calls --;
     ownStats.total_resp_ms -= logEntry.resp_ms;
     ownStats.errors -= logEntry.error;
 
@@ -34,7 +43,13 @@ function purgeOldLogs() {
 
 function statsRefresher() {
   purgeOldLogs();
+  if (ownStats.calls > 0) {
+    ownStats.avg_resp_ms = ownStats.total_resp_ms / ownStats.calls;
+  } else {
+    ownStats.avg_resp_ms = 0.0;
+  }
   console.log(ownStats);
+  mqClient.publish(CHANNEL_SERVICESTATE, JSON.stringify(ownStats));
 }
 
 function logRequest(resp_ms, child_requests, error) {
@@ -72,6 +87,17 @@ app.get('/', function(req, res){
 setInterval(statsRefresher, STATS_REFRESH_INTERVAL_MSEC);
 
 // The server is about to start up
-// TODO: Send a hello to the message queue with my configuration.
+// Send a hello to the message queue with my configuration.
+// TODO: Get this info from some initial configfile.
 
+var config = {
+  'serviceName': SERVICE_NAME,
+  'version': '0.1.0',
+  'clients': {
+  }
+};
+mqClient.publish(CHANNEL_SERVICECONFIG, JSON.stringify(config));
+
+
+// TODO: Configure port from configfile.
 app.listen(3000);
