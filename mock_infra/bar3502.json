@@ -1,5 +1,14 @@
 {
   "service_name": "BarService",
   "port": 3502,
-  "clients": []
+  "clients": [
+    {
+      "service_name": "FooService",
+      "url": "localhost:3501"
+    },
+    {
+      "service_name": "BazService",
+      "url": "localhost:3503"
+    }
+  ]
 }

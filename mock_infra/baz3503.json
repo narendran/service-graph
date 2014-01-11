@@ -1,0 +1,5 @@
+{
+  "service_name": "BazService",
+  "port": 3503,
+  "clients": []
+}

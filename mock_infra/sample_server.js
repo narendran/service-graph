@@ -6,7 +6,7 @@ var jsonfile = require('jsonfile');
 var http = require('http');
 var Futures = require('futures');
 
-var STATS_REFRESH_INTERVAL_MSEC = 10000;
+var STATS_REFRESH_INTERVAL_MSEC = 2000;
 var CHANNEL_SERVICECONFIG = 'serviceconfig';
 var CHANNEL_SERVICESTATE = 'servicestats';
 var CHANNEL_CLIENTSTATS = 'clientstats';
@@ -68,7 +68,10 @@ function statsRefresher() {
   } else {
     ownStats.avg_resp_ms = 0.0;
   }
-  console.log(ownStats);
+  // console.log(ownStats);
+  if (logEntries.length > 0) {
+    console.log(logEntries);
+  }
   mqClient.publish(CHANNEL_SERVICESTATE, JSON.stringify(ownStats));
 }
 
@@ -85,12 +88,20 @@ function logRequest(resp_ms, child_requests, error) {
   ownStats.total_resp_ms += resp_ms;
   ownStats.errors += error;
 
+  console.log(child_requests);
   // TODO: Add child stats for logEntry
+}
+
+function handleClient(client) {
 }
 
 app.get('/' + config.service_name, function(req, res) {
   var start = new Date();
   var seq = Futures.sequence.create(), err;
+
+  var childReqs = [];
+  var op = '';
+
   for (var i = 0; i < config.clients.length; i ++) {
     var client = config.clients[i];
     var options = {
@@ -103,14 +114,26 @@ app.get('/' + config.service_name, function(req, res) {
     var url = 'http://' + client.url + '/' + client.service_name;
     console.log(url);
     seq.then(function(next) {
-      http.get(url, next);
+      var strt = new Date();
+      http.get(url, function(resp) {
+        next(resp, strt);
+      });
     })
-    .then(function(next, resp) {
+    .then(function(next, resp, prevStart) {
       resp.setEncoding('utf8');
-      resp.on('data', next);
+      resp.on('data', function(d) {
+        op += d;
+        next(d, prevStart);
+      });
     })
-    .then(function(next, d) {
-      res.write(d + '\n');
+    .then(function(next, d, prevStart) {
+      // res.write(d);
+      console.log('Delay', new Date() - prevStart);
+      childReqs.push({
+        'service_name': client.service_name,
+        'resp_ms': new Date() - prevStart
+      });
+      console.log('childReqs', childReqs);
       next(err);
     });
   }
@@ -123,7 +146,7 @@ app.get('/' + config.service_name, function(req, res) {
 
     var selftime = new Date() - start;
     console.log('Response time: ', selftime, 'ms');
-    logRequest(selftime, [], false);
+    logRequest(selftime, childReqs, false);
     next();
   });
 });
