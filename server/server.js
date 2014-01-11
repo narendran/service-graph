@@ -97,26 +97,23 @@ app.get("/metrics/service", function handler(req,res){
 	urlparts = url.parse(req.url);
 	MongoClient.connect('mongodb://127.0.0.1:27017/service_graph', function(err, db) {
 		var collection = db.collection('servicemetrics');
-		var lastHour = new Date();
-  		lastHour.setHours(lastHour.getHours()-1);
-  		console.log(lastHour);
+		var date = new Date() - 24 * 60 * 60 * 1000;
 		collection.find({
-	 		'timestamp': {
-	   			$gte: lastHour
+	 		timestamp: {
+	   			$gte: date
 	  		},
-	  		'service': urlparts.query.SERVICE
+	  		service: req.query.SERVICE
 		}, function(err, cursor) {
-				console.log(arguments);
-                cursor.each(function(err, item) {
-                  if(item != null) {
-                          dp.push(item.avg_resp_ms);
-                  }
-              });
-              console.log(dp);
+				cursor.toArray(function(err, docs){
+					for(i=0;i<docs.length;i++){
+						dp.push(docs[i]['avg_resp_ms']);
+					}
+					console.log(dp);
+					res.end(JSON.stringify(dp));
+				});
           });
 	});
-	res.writeHead(200,{'Content-Type':'text/html'});
-	res.end(dp);
+	res.writeHead(200,{'Content-Type':'text/plain'});
 });
 
 

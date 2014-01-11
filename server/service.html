@@ -1,14 +1,51 @@
 <html>
 <head>
 <title>Service Level Breakdown</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 <script src="http://code.highcharts.com/highcharts.js"></script>
 <script src="http://code.highcharts.com/modules/exporting.js"></script>
+<script>
+function getParameterByName(name) {
+    name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
+</script>
 </head>
 
 <body>
-	
+<div class="bs-header" id="content">
+      <div class="container">
+        <h1><script>document.write(getParameterByName('SERVICE'))</script> Performance Overview</h1>
+        <p>Check performance breakdowns from the level of datacenters to individual machines!</p>
+        </div>
+ </div>
+ <br/><br/>
+
+
 <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+<hr>
+<h2> Data Center BreakDown </h2>
+<div class="container">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="col-md-4">
+         <div id="dc1-container"></div>
+        </div>
+        <div class="col-md-4">
+          <div id="dc2-container"></div>
+       </div>
+        <div class="col-md-4">
+         <div id="dc3-container"></div>
+        </div>
+      </div>
+</div>
+      <hr>
 
 </body>
 
@@ -18,21 +55,11 @@ dp = [];
 
 $.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
 	function( data ) {
-		$.each( data, function( val ) {
-			dp.push(val);
+		$.each( data, function( i, item ) {
+			dp.push(item);
 		});
 		console.log(dp);
-	});
-
-function getParameterByName(name) {
-    name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-        results = regex.exec(location.search);
-    return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-}
-
-$(function () {
-        $('#container').highcharts({
+		 $('#container').highcharts({
             chart: {
                 type: 'area'
             },
@@ -73,9 +100,13 @@ $(function () {
             },
             series: [ {
                 name: getParameterByName('SERVICE'),
-                data: []
+                data: dp
             }]
         });
+	});
+
+$(function () {
+       
     });
 </script>
 </html>
