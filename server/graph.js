@@ -19,6 +19,8 @@ var socket = io.connect('http://localhost');
       globalRend.renderer.redraw();
     });
 
+    
+
 nodesList = {}
 edgesList = {}
 // Populate original list from serviceconfig
@@ -120,10 +122,12 @@ var globalRend;
         // for moves and mouseups while dragging
         var handler = {
           clicked:function(e){
-            window.location="www.google.com";
+            console.log(e);
+            
             var pos = $(canvas).offset();
             _mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
             dragged = particleSystem.nearest(_mouseP);
+            window.location="/service.html?SERVICE="+dragged.node.name;
 
             if (dragged && dragged.node !== null){
               // while we're dragging, don't let physics move the node
@@ -169,7 +173,7 @@ var globalRend;
   }    
 
   $(document).ready(function(){
-    var sys = arbor.ParticleSystem(1000, 600, 0.5) // create the system with sensible repulsion/stiffness/friction
+    var sys = arbor.ParticleSystem(1500, 900, 0.5) // create the system with sensible repulsion/stiffness/friction
     globalRend = sys;
     sys.parameters({gravity:true}) // use center-gravity to make the graph settle nicely (ymmv)
     sys.renderer = Renderer("#viewport") // our newly created renderer will have its .init() method called shortly by sys...

@@ -146,7 +146,14 @@ $.getJSON( "/metrics/service/"+getParameterByName('SERVICE') + "/dcs",
                   },
                   series: [ {
                       name: getParameterByName('SERVICE') + ' on ' + item.toUpperCase(),
-                      data: dp
+                      data: dp,
+                      point: 
+                      { events : {
+                          click : function(e){
+                            window.location="/appserver.html?SERVICE="+getParameterByName('SERVICE')+"&DC="+item;
+                          }
+                        }
+                      }
                   }]
               });
       });

@@ -1,14 +1,20 @@
 <html>
 <head>
 	<title>Sherlock - Triage production issues in seconds!</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 </head>
 <style type="text/css">
 body{
   margin:0;
-  padding:20px;
+  padding:10px;
   font:12px/17px Arial, sans-serif;
-  background:#f9f9f9;
+  background:#ffffff;
 }	
+
 </style>
 <body>
 	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
@@ -18,7 +24,25 @@ body{
 
 	<script src="/socket.io/socket.io.js"></script>
 	<script src="/graph.js"></script>
-	<canvas id="viewport" width="800" height="600"></canvas>
+	<div class="container">
+	<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-3">
+      <!--Sidebar content-->
+         <img src="sherlock.jpg" width="80%" height="25%">
+	</div>
+    <div class="col-md-9">
+   </div>
+      </div>
+      <div class="row">
+       <!--Body content-->
+       <div class="">
+      <canvas id="viewport" width="900" height="600"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+    
 </body>
 </html>
 

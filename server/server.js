@@ -243,6 +243,9 @@ app.get('/metrics/service/:service/clients', function(req, res) {
       {'fields': ['client', 'service']},
       function(err, cursor) {
         cursor.toArray(function(err, clients) {
+          if(clients==null){
+          	return [];
+          }
           var uniq_clients = (clients.map(function(x) {
             return x['client'].split('/')[1] + ' :: ' + x['service'];
           })
@@ -290,7 +293,7 @@ app.get('/metrics/service/:service/dcs', function(req, res) {
 });
 
 app.get('/metrics/service/:service/machine/:machine', function(req, res) {
-    console.log(req.params.service, req.params.dc);
+    console.log(req.params.service, req.params.machine);
     res.writeHead(200,{'Content-Type':'application/json'});
     //res.send('Hello world!');
 
@@ -300,7 +303,7 @@ app.get('/metrics/service/:service/machine/:machine', function(req, res) {
       collection.group(['timestamp'],
         {'timestamp': {$gte: timestamp24HoursAgo},
 	  		 'service': req.params.service,
-         'instance': req.params.machine},
+         'instance': {$regex: '.*/'+req.params.machine}},
         {'value': 0, 'count': 0},
         function(obj, prev) {
             prev.count += obj.calls;
@@ -315,7 +318,49 @@ app.get('/metrics/service/:service/machine/:machine', function(req, res) {
           var values = [];
           for (var i = 0; i < grouped_value.length; i ++) {
             var value = grouped_value[i];
-            values.push(value.value/value.count);
+            values.push(value.value/value.count || 0.0);
+          }
+          values = shrinkArray(values);
+          res.end(JSON.stringify(values));
+        }
+      );
+
+    });
+});
+
+app.get('/metrics/service/:service/dcaggr/:dc', function(req, res) {
+    console.log(req.params.service, req.params.dc);
+    res.writeHead(200,{'Content-Type':'application/json'});
+    //res.send('Hello world!');
+
+    MongoClient.connect('mongodb://127.0.0.1:27017/service_graph', function(err, db) {
+      var collection = db.collection('servicemetrics');
+      var timestamp24HoursAgo = new Date() - 24 * 60 * 60 * 1000;
+      collection.group(['instance','timestamp'],
+        {'timestamp': {$gte: timestamp24HoursAgo},
+	  		 'service': req.params.service,
+         'instance': {$regex: req.params.dc + '/.*'}},
+        {'value': 0, 'count': 0},
+        function(obj, prev) {
+            prev.count += obj.calls;
+            prev.value += obj.total_resp_ms;
+        },
+        true,
+        function(err, grouped_value) {
+          if (err) {
+            console.error(err);
+          }
+          console.log(grouped_value);
+          var values = {};
+          for (var i = 0; i < grouped_value.length; i ++) {
+            var value = grouped_value[i];
+            if(values[value['instance']]== null){
+            	values[value['instance']] = []
+            }
+            values[value['instance']].push(value.value/value.count || 0.0);
+          }
+          for(i in values){
+          	values[i] = shrinkArray(values[i]);
           }
           res.end(JSON.stringify(values));
         }

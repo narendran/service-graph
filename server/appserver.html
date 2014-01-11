@@ -38,14 +38,16 @@ h2 {
 <div class="bs-header" id="content">
       <div class="container">
         <h1><script>document.write(getParameterByName('SERVICE'))</script> Performance Overview</h1>
-        <p><font size="4">Machine : <script>document.write(getParameterByName('MACHINE'))</script></font></p>
+        
         </div>
  	</div>
+<hr>
+
+ <br/>
+
 
 <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto" onclick="window.location='http://google.com'"></div>
 <hr>
-
- <br/><br/>
  </body>
  <script>
 Highcharts.setOptions({
@@ -88,21 +90,26 @@ Highcharts.setOptions({
 
 
 
-$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE')+"&MACHINE="+getParameterByName('MACHINE'), 
+$.getJSON( "/metrics/service/"+getParameterByName('SERVICE')+"/dcaggr/"+getParameterByName('DC'), 
 	function( data ) {
 		var dp =[];
 		$.each( data, function( i, item ) {
 			dp.push(item);
 		});
 		console.log(dp);
+		var seriesOptions = []
+		var iter = 0;
+		for(i in dp){
+			seriesOptions[iter++] = {
+				name : i,
+				data : dp[i]
+			}
+		}
 		 $('#container').highcharts({
             chart: {
                 type: 'line'
             },
-            series: [ {
-                name: getParameterByName('SERVICE'),
-                data: dp
-            }]
+            series: seriesOptions
         });
 	});
 </script>
