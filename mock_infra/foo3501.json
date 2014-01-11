@@ -1,0 +1,5 @@
+{
+  "service_name": "FooService",
+  "port": 3501,
+  "clients": []
+}

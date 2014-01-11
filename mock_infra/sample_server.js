@@ -2,17 +2,32 @@ var express = require('express');
 var app = express();
 var sleep = require('sleep');
 var redis = require('redis');
+var jsonfile = require('jsonfile');
 
 var STATS_REFRESH_INTERVAL_MSEC = 2000;
 var CHANNEL_SERVICECONFIG = 'serviceconfig';
 var CHANNEL_SERVICESTATE = 'servicestats';
 var CHANNEL_CLIENTSTATS = 'clientstats';
-var SERVICE_NAME = 'HelloService';
+
+var configFile = null;
+
+if (process.argv.length < 3) {
+  console.error('ERROR: Configfile not passed.');
+  console.log('Usage: ', process.argv[0], process.argv[1], 'configfile');
+  return;
+}
+
+configFile = __dirname + '/' + process.argv[2];
+config = jsonfile.readFileSync(configFile);
+config.port = config.port || 3000;
+config.clients = config.clients || [];
+
+console.log(config);
 
 var mqClient = redis.createClient(null, '137.110.52.123');
 
 var ownStats = {
-  'service': SERVICE_NAME,
+  'service': config.service_name,
   'calls': 0,
   'total_resp_ms': 0,
   'errors': 0,
@@ -88,16 +103,6 @@ setInterval(statsRefresher, STATS_REFRESH_INTERVAL_MSEC);
 
 // The server is about to start up
 // Send a hello to the message queue with my configuration.
-// TODO: Get this info from some initial configfile.
-
-var config = {
-  'serviceName': SERVICE_NAME,
-  'version': '0.1.0',
-  'clients': {
-  }
-};
 mqClient.publish(CHANNEL_SERVICECONFIG, JSON.stringify(config));
 
-
-// TODO: Configure port from configfile.
-app.listen(3000);
+app.listen(config.port);

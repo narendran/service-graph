@@ -1,0 +1,10 @@
+{
+  "service_name": "HelloService",
+  "port": 3500,
+  "clients": [
+    {
+      "service_name": "FooService",
+      "url": "localhost:3501"
+    }
+  ]
+}
