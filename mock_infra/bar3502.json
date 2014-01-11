@@ -1,0 +1,5 @@
+{
+  "service_name": "BarService",
+  "port": 3502,
+  "clients": []
+}
