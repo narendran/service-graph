@@ -106,6 +106,7 @@ var globalRend;
         // for moves and mouseups while dragging
         var handler = {
           clicked:function(e){
+            window.location="www.google.com";
             var pos = $(canvas).offset();
             _mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
             dragged = particleSystem.nearest(_mouseP);

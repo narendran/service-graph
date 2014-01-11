@@ -1,0 +1,81 @@
+<html>
+<head>
+<title>Service Level Breakdown</title>
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
+</head>
+
+<body>
+	
+<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+
+</body>
+
+<script>
+
+dp = [];
+
+$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+	function( data ) {
+		$.each( data, function( val ) {
+			dp.push(val);
+		});
+		console.log(dp);
+	});
+
+function getParameterByName(name) {
+    name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
+$(function () {
+        $('#container').highcharts({
+            chart: {
+                type: 'area'
+            },
+            title: {
+                text: getParameterByName('SERVICE') + " performance"
+            },
+            xAxis: {
+                labels: {
+                    formatter: function() {
+                        return this.value; 
+                    }
+                }
+            },
+            yAxis: {
+                title: {
+                    text: 'Avg. Response Time (ms)'
+                },
+                labels: {
+                    formatter: function() {
+                        return this.value / 1000 +'k';
+                    }
+                }
+            },
+            plotOptions: {
+                area: {
+                     // pointStart: 1940,
+                    marker: {
+                        enabled: false,
+                        symbol: 'circle',
+                        radius: 2,
+                        states: {
+                            hover: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+            },
+            series: [ {
+                name: getParameterByName('SERVICE'),
+                data: []
+            }]
+        });
+    });
+</script>
+</html>
