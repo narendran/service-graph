@@ -1,0 +1,28 @@
+{
+  "service_name": "BizService",
+  "addr": {
+    "dc": "sf",
+    "host": "sf11",
+    "port": 5000
+  },
+  "clients": [
+    {
+      "client_name": "foo1",
+      "service_name": "FooService",
+      "addr": {
+        "dc": "atl",
+        "host": "atl09",
+        "port": 3501
+      }
+    },
+    {
+      "client_name": "hello1",
+      "service_name": "HelloService",
+      "addr": {
+        "dc": "kc",
+        "host": "kc01",
+        "port": 3500
+      }
+    }
+  ]
+}
