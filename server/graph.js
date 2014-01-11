@@ -19,14 +19,32 @@ var socket = io.connect('http://localhost');
       globalRend.renderer.redraw();
     });
 
-nodesList = { ShorturiService:{name:"ShorturiService"},MyAddressService:{name:"MyAddressService"},DumbService:{name:"DumbService"},JohnService:{alone:true,name:"JohnService"},JackService:{name:"JackService"}};
-edgesList = {
-        ShorturiService:{ MyAddressService:{directed: true, weight:3 },
-            DumbService:{directed: true},
-            JohnService:{directed: true},
-            JackService:{directed: true}
-        }
-      };
+nodesList = {}
+edgesList = {}
+// Populate original list from serviceconfig
+// MongoDB connection variables
+$.ajax({ 
+  dataType: 'json',
+  url: "/configs", 
+  success: function(docs) {
+  console.log(docs);
+  docs.toArray(function(err, items) {
+      for(i=0;i<items.length;i++){
+        nodesList[items[i].serviceName] = {name:items[i].serviceName};
+        items[i].clients.toArray(function(err, clientList){
+          for(j=0;j<clientList.length;j++){
+            if(edgesList[items[i].serviceName]===undefined)
+              edgesList[items[i].serviceName]={}
+            edgesList[items[i].serviceName][clientList[j].service_name] = {};
+          }
+        });
+        console.log(nodesList);
+        console.log(edgesList);
+      }
+      db.close();
+    })
+  },
+  async:false});
     
 var globalRend;
 

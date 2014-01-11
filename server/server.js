@@ -20,7 +20,7 @@ client_sc.on("message", function (channel, message) {
 	    if(err) throw err;
 	    var collection = db.collection('serviceconfigs');
 	    msgJson = JSON.parse(message)	
-		collection.insert({'serviceName':msgJson.serviceName, 'version' : msgJson.version, 'clients' : msgJson.clients}, function(){}); // Inserting the ramble and the time when the ramble was rambled! :D
+		collection.insert({'serviceName':msgJson.serviceName, 'version' : msgJson.version, 'clients' : msgJson.clients}, function(){}); 
 		if(globalIOSocket)
 			globalIOSocket.emit('serviceconfig', msgJson);
 	});
@@ -33,7 +33,7 @@ client_sm.on("message", function (channel, message) {
 	    if(err) throw err;
 	    var collection = db.collection('servicemetrics');
 	    msgJson = JSON.parse(message)	
-		collection.insert({'service':msgJson.service, 'calls' : msgJson.calls, 'total_resp_ms' : msgJson.clients, "errors" : msgJson.errors, 'avg_resp_ms': msgJson.avg_resp_ms, 'timestamp': msgJson.timestamp}, function(){}); // Inserting the ramble and the time when the ramble was rambled! :D
+		collection.insert({'service':msgJson.service, 'calls' : msgJson.calls, 'total_resp_ms' : msgJson.clients, "errors" : msgJson.errors, 'avg_resp_ms': msgJson.avg_resp_ms, 'timestamp': msgJson.timestamp}, function(){}); 
 		if(globalIOSocket)
 			globalIOSocket.emit('servicemetrics', msgJson);
 
@@ -46,7 +46,7 @@ client_cm.on("message", function (channel, message) {
 	    if(err) throw err;
 	    var collection = db.collection('clientmetrics');
 	    msgJson = JSON.parse(message)	
-		collection.insert({'service':msgJson.service, 'calls' : msgJson.calls, 'total_resp_ms' : msgJson.clients, "errors" : msgJson.errors, 'avg_resp_ms': msgJson.avg_resp_ms}, function(){}); // Inserting the ramble and the time when the ramble was rambled! :D
+		collection.insert({'service':msgJson.service, 'calls' : msgJson.calls, 'total_resp_ms' : msgJson.clients, "errors" : msgJson.errors, 'avg_resp_ms': msgJson.avg_resp_ms}, function(){}); 
 		if(globalIOSocket)
 			globalIOSocket.emit('clientmetrics', msgJson);
 
@@ -115,5 +115,20 @@ app.get("/metrics/service", function handler(req,res){
 	});
 	res.writeHead(200,{'Content-Type':'text/plain'});
 });
+
+app.get("/configs", function handler(req,res){
+	dp =[];
+	MongoClient.connect('mongodb://127.0.0.1:27017/service_graph', function(err, db) {
+		var collection = db.collection('serviceconfigs');
+		collection.find().toArray(function(err, docs) {
+					for(i=0;i<docs.length;i++){
+						dp.push(docs[i]);
+					}
+					console.log(dp);
+					res.writeHead(200,{"Content-Type" : "text/plain"});
+					res.end(JSON.stringify(dp));
+				});
+          });
+	});
 
 

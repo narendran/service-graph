@@ -1,10 +1,11 @@
-<html>
+<html lang="en">
 <head>
 <title>Service Level Breakdown</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 <script src="http://code.highcharts.com/highcharts.js"></script>
 <script src="http://code.highcharts.com/modules/exporting.js"></script>
 <script>
@@ -16,54 +17,62 @@ function getParameterByName(name) {
 }
 
 </script>
+<style type="text/css">
+.bs-header {
+color: #FFFFFF;
+background-color: #563d7c;
+background-image: url('download.png');
+padding: 30px 15px 40px;
+text-align: left;
+}
+
+div {
+	display: block;
+}
+h2 {
+	padding: 30px 15px 40px;
+}
+</style>
 </head>
 
 <body>
 <div class="bs-header" id="content">
       <div class="container">
         <h1><script>document.write(getParameterByName('SERVICE'))</script> Performance Overview</h1>
-        <p>Check performance breakdowns from the level of datacenters to individual machines!</p>
+        <p><font size="4">Check performance breakups from the level of datacenters to individual machines!</font></p>
         </div>
  </div>
  <br/><br/>
 
 
-<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto" onclick="window.location='http://google.com'"></div>
 <hr>
-<h2> Data Center BreakDown </h2>
+<h2> Data Center Breakup </h2>
 <div class="container">
       <!-- Example row of columns -->
       <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-6">
          <div id="dc1-container"></div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div id="dc2-container"></div>
        </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
          <div id="dc3-container"></div>
+        </div>
+        <div class="col-md-6">
+         <div id="dc4-container"></div>
         </div>
       </div>
 </div>
       <hr>
-
+<h2> Client Level Breakup </h2>
+<hr>
 </body>
 
 <script>
-
-dp = [];
-
-$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
-	function( data ) {
-		$.each( data, function( i, item ) {
-			dp.push(item);
-		});
-		console.log(dp);
-		 $('#container').highcharts({
-            chart: {
-                type: 'area'
-            },
-            title: {
+Highcharts.setOptions({
+        	title: {
                 text: getParameterByName('SERVICE') + " performance"
             },
             xAxis: {
@@ -97,6 +106,88 @@ $.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'),
                         }
                     }
                 }
+            }
+        });
+
+dp = [];
+
+$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+	function( data ) {
+		$.each( data, function( i, item ) {
+			dp.push(item);
+		});
+		console.log(dp);
+		 $('#container').highcharts({
+            chart: {
+                type: 'line'
+            },
+            series: [ {
+                name: getParameterByName('SERVICE'),
+                data: dp
+            }]
+        });
+	});
+
+$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+	function( data ) {
+		$.each( data, function( i, item ) {
+			dp.push(item);
+		});
+		console.log(dp);
+		 $('#dc1-container').highcharts({
+            chart: {
+                type: 'line'
+            },
+            series: [ {
+                name: getParameterByName('SERVICE'),
+                data: dp
+            }]
+        });
+	});
+
+$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+	function( data ) {
+		$.each( data, function( i, item ) {
+			dp.push(item);
+		});
+		console.log(dp);
+		 $('#dc2-container').highcharts({
+            chart: {
+                type: 'line'
+            },
+            series: [ {
+                name: getParameterByName('SERVICE'),
+                data: dp
+            }]
+        });
+	});
+
+$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+	function( data ) {
+		$.each( data, function( i, item ) {
+			dp.push(item);
+		});
+		console.log(dp);
+		 $('#dc3-container').highcharts({
+            chart: {
+                type: 'line'
+            },
+            series: [ {
+                name: getParameterByName('SERVICE'),
+                data: dp
+            }]
+        });
+	});
+
+$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+	function( data ) {
+		$.each( data, function( i, item ) {
+			dp.push(item);
+		});
+		console.log(dp);
+		 $('#dc4-container').highcharts({
+            chart: {
+                type: 'line'
             },
             series: [ {
                 name: getParameterByName('SERVICE'),
