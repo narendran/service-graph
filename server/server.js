@@ -177,7 +177,7 @@ app.get('/metrics/service/:service/dc/:dc', function(req, res) {
           var values = [];
           for (var i = 0; i < grouped_value.length; i ++) {
             var value = grouped_value[i];
-            values.push(value.value/value.count);
+            values.push(value.value/value.count || 0.0);
           }
           values = shrinkArray(values);
           res.end(JSON.stringify(values));
@@ -213,7 +213,7 @@ app.get('/metrics/service/:service/client/:client', function(req, res) {
           var values = [];
           for (var i = 0; i < grouped_value.length; i ++) {
             var value = grouped_value[i];
-            values.push(value.value/value.count);
+            values.push(value.value/value.count || 0.0);
           }
           values = shrinkArray(values);
           res.end(JSON.stringify(values));
