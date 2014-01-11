@@ -39,7 +39,7 @@ var ownStats = {
   'avg_resp_ms': 0
 };
 
-var childStats = {};
+var clientStats = [];
 var logEntries = [];
 
 function purgeOldLogs() {
@@ -55,7 +55,17 @@ function purgeOldLogs() {
     ownStats.total_resp_ms -= logEntry.resp_ms;
     ownStats.errors -= logEntry.error;
 
-    // TODO: Remove child stats for logEntry
+    for (var i = 0; i < logEntry.client_requests.length; i ++) {
+      var client = logEntry.client_requests[i];
+      var stat = clientStats[client.service_name];
+      if (!stat) {
+        console.error("ClientStats object not found");
+        continue;
+      }
+      stat.calls --;
+      stat.total_resp_ms -= client.resp_ms;
+      stat.errors -= client.error;
+    }
 
     logEntries.shift();   // Remove from head of queue
   }
@@ -68,18 +78,32 @@ function statsRefresher() {
   } else {
     ownStats.avg_resp_ms = 0.0;
   }
-  // console.log(ownStats);
   if (logEntries.length > 0) {
-    console.log(logEntries);
+    for (var svc in clientStats) {
+      var stat = clientStats[svc];
+      console.log(stat);
+    }
+    console.log(ownStats);
+    // console.log(logEntries);
+  }
+
+  for (var svc in clientStats) {
+    var stat = clientStats[svc];
+    if (stat.calls > 0) {
+      stat.avg_resp_ms = stat.total_resp_ms / stat.calls;
+    } else {
+      stat.avg_resp_ms = 0.0;
+    }
+    mqClient.publish(CHANNEL_CLIENTSTATS, JSON.stringify(stat));
   }
   mqClient.publish(CHANNEL_SERVICESTATE, JSON.stringify(ownStats));
 }
 
-function logRequest(resp_ms, child_requests, error) {
+function logRequest(resp_ms, client_requests, error) {
   var logEntry = {
     'timestamp': new Date(),
     'resp_ms': resp_ms,
-    'children': child_requests,
+    'client_requests': client_requests,
     'error': error
   };
 
@@ -88,54 +112,71 @@ function logRequest(resp_ms, child_requests, error) {
   ownStats.total_resp_ms += resp_ms;
   ownStats.errors += error;
 
-  console.log(child_requests);
-  // TODO: Add child stats for logEntry
+  for (var i = 0; i < client_requests.length; i ++) {
+    var client = client_requests[i];
+    var stat = clientStats[client.service_name];
+    if (!stat) {
+      stat = clientStats[client.service_name] = {
+        'service': client.service_name,
+        'client_service': config.service_name,
+        'calls': 0,
+        'total_resp_ms': 0,
+        'errors': 0,
+        'avg_resp_ms': 0
+      };
+    }
+
+    stat.calls ++;
+    stat.total_resp_ms += client.resp_ms;
+    stat.errors += client.error;
+  }
 }
 
-function handleClient(client) {
+function handleClient(client, seq, err, op, clientReqs) {
+  var options = {
+    'hostname': client.url.split(':')[0],
+    'port': client.url.split(':')[1],
+    'path': '/' + client.service_name,
+    'method': 'GET'
+  };
+
+  var url = 'http://' + client.url + '/' + client.service_name;
+  console.log(url);
+  seq.then(function(next) {
+    var strt = new Date();
+    http.get(url, function(resp) {
+      next(resp, strt);
+    });
+  })
+  .then(function(next, resp, prevStart) {
+    resp.setEncoding('utf8');
+    resp.on('data', function(d) {
+      op += d;
+      next(d, prevStart);
+    });
+  })
+  .then(function(next, d, prevStart) {
+    // res.write(d);
+    console.log('Delay', new Date() - prevStart);
+    clientReqs.push({
+      'service_name': client.service_name,
+      'resp_ms': new Date() - prevStart,
+      'error': false
+    });
+    next(err);
+  });
 }
 
 app.get('/' + config.service_name, function(req, res) {
   var start = new Date();
   var seq = Futures.sequence.create(), err;
 
-  var childReqs = [];
+  var clientReqs = [];
   var op = '';
 
   for (var i = 0; i < config.clients.length; i ++) {
     var client = config.clients[i];
-    var options = {
-      'hostname': client.url.split(':')[0],
-      'port': client.url.split(':')[1],
-      'path': '/' + client.service_name,
-      'method': 'GET'
-    };
-
-    var url = 'http://' + client.url + '/' + client.service_name;
-    console.log(url);
-    seq.then(function(next) {
-      var strt = new Date();
-      http.get(url, function(resp) {
-        next(resp, strt);
-      });
-    })
-    .then(function(next, resp, prevStart) {
-      resp.setEncoding('utf8');
-      resp.on('data', function(d) {
-        op += d;
-        next(d, prevStart);
-      });
-    })
-    .then(function(next, d, prevStart) {
-      // res.write(d);
-      console.log('Delay', new Date() - prevStart);
-      childReqs.push({
-        'service_name': client.service_name,
-        'resp_ms': new Date() - prevStart
-      });
-      console.log('childReqs', childReqs);
-      next(err);
-    });
+    handleClient(client, seq, err, op, clientReqs);
   }
   
   seq.then(function(next) {
@@ -146,7 +187,7 @@ app.get('/' + config.service_name, function(req, res) {
 
     var selftime = new Date() - start;
     console.log('Response time: ', selftime, 'ms');
-    logRequest(selftime, childReqs, false);
+    logRequest(selftime, clientReqs, false);
     next();
   });
 });
