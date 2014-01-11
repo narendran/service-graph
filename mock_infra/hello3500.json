@@ -5,6 +5,10 @@
     {
       "service_name": "FooService",
       "url": "localhost:3501"
+    },
+    {
+      "service_name": "BarService",
+      "url": "localhost:3502"
     }
   ]
 }

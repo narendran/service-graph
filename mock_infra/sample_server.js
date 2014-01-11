@@ -3,11 +3,16 @@ var app = express();
 var sleep = require('sleep');
 var redis = require('redis');
 var jsonfile = require('jsonfile');
+var http = require('http');
+var Futures = require('futures');
 
-var STATS_REFRESH_INTERVAL_MSEC = 2000;
+var STATS_REFRESH_INTERVAL_MSEC = 10000;
 var CHANNEL_SERVICECONFIG = 'serviceconfig';
 var CHANNEL_SERVICESTATE = 'servicestats';
 var CHANNEL_CLIENTSTATS = 'clientstats';
+var DEFAULT_DELAY_MS = 50000;
+
+var delay = DEFAULT_DELAY_MS;
 
 var configFile = null;
 
@@ -83,20 +88,45 @@ function logRequest(resp_ms, child_requests, error) {
   // TODO: Add child stats for logEntry
 }
 
-app.use(function(req, res, next){
-  var timer_start = new Date();
-  next();
-  var timer_end = new Date();
-  var selftime = timer_end - timer_start;
-  console.log('Response time: ', selftime, 'ms');
-  logRequest(selftime, [], false);
-});
+app.get('/' + config.service_name, function(req, res) {
+  var start = new Date();
+  var seq = Futures.sequence.create(), err;
+  for (var i = 0; i < config.clients.length; i ++) {
+    var client = config.clients[i];
+    var options = {
+      'hostname': client.url.split(':')[0],
+      'port': client.url.split(':')[1],
+      'path': '/' + client.service_name,
+      'method': 'GET'
+    };
 
-app.get('/', function(req, res){
-  res.send('Hello world');
+    var url = 'http://' + client.url + '/' + client.service_name;
+    console.log(url);
+    seq.then(function(next) {
+      http.get(url, next);
+    })
+    .then(function(next, resp) {
+      resp.setEncoding('utf8');
+      resp.on('data', next);
+    })
+    .then(function(next, d) {
+      console.log('Here2');
+      res.write(d + '\n');
+      next(err);
+    });
+  }
+  
+  seq.then(function(next) {
+    // Fake wait time.
+    sleep.usleep(delay);
+    res.write(config.service_name);
+    res.end();
 
-  // Fake 10ms wait time.
-  sleep.usleep(10000);
+    var selftime = new Date() - start;
+    console.log('Response time: ', selftime, 'ms');
+    logRequest(selftime, [], false);
+    next();
+  });
 });
 
 setInterval(statsRefresher, STATS_REFRESH_INTERVAL_MSEC);
