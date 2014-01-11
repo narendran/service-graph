@@ -3,10 +3,12 @@
   "port": 3502,
   "clients": [
     {
+      "client_name": "foo1",
       "service_name": "FooService",
       "url": "localhost:3501"
     },
     {
+      "client_name": "baz1",
       "service_name": "BazService",
       "url": "localhost:3503"
     }

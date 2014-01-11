@@ -79,6 +79,10 @@ function statsRefresher() {
     ownStats.avg_resp_ms = 0.0;
   }
 
+  var current_time = new Date().getTime();
+  ownStats.timestamp = current_time;
+  mqClient.publish(CHANNEL_SERVICESTATE, JSON.stringify(ownStats));
+
   for (var svc in clientStats) {
     var stat = clientStats[svc];
     if (stat.calls > 0) {
@@ -86,9 +90,9 @@ function statsRefresher() {
     } else {
       stat.avg_resp_ms = 0.0;
     }
+    stat.timestamp = current_time;
     mqClient.publish(CHANNEL_CLIENTSTATS, JSON.stringify(stat));
   }
-  mqClient.publish(CHANNEL_SERVICESTATE, JSON.stringify(ownStats));
 
   if (logEntries.length > 0) {
     for (var svc in clientStats) {
@@ -117,9 +121,10 @@ function logRequest(resp_ms, client_requests, errors) {
     var client = client_requests[i];
     var stat = clientStats[client.service_name];
     if (!stat) {
+      console.log(client);
       stat = clientStats[client.service_name] = {
         'service': client.service_name,
-        'client_service': config.service_name,
+        'client': config.service_name + '/' + client.client_name,
         'calls': 0,
         'total_resp_ms': 0,
         'errors': 0,
@@ -167,6 +172,7 @@ function handleClient(client, seq, err, op, clientReqs) {
     // res.write(d);
     console.log('Delay', new Date() - prevStart);
     clientReqs.push({
+      'client_name': client.client_name,
       'service_name': client.service_name,
       'resp_ms': new Date() - prevStart,
       'errors': ((d == null) ? 1 : 0)
