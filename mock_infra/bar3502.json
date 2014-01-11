@@ -1,11 +1,12 @@
 {
   "service_name": "BarService",
-  "port": 3502,
   "addr": {
     "dc": "sf",
     "host": "sf02",
     "port": 3502
   },
+  "error_thresh": 0.005,
+  "response_time_thresh_ms": 200,
   "clients": [
     {
       "client_name": "foo1",

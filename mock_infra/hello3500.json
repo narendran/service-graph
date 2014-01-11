@@ -5,6 +5,8 @@
     "host": "kc01",
     "port": 3500
   },
+  "error_thresh": 0.005,
+  "response_time_thresh_ms": 275,
   "clients": [
     {
       "client_name": "foo1",
