@@ -9,6 +9,21 @@ io.sockets.on('connection', function (socket) {
 		globalIOSocket = socket;
 	});
 
+// Approximate number of elements in a single query output
+var MAX_ELEMS = 200;
+
+function shrinkArray(dp) {
+  if (dp.length > MAX_ELEMS) {
+    var skip_factor = parseInt(dp.length / MAX_ELEMS);
+
+    dp = dp.filter(function(elem, index, self) {
+      return index % skip_factor == 0;
+    });
+  }
+
+  return dp;
+}
+
 
 // MongoDB connection variables
 var MongoClient = require('mongodb').MongoClient, format = require('util').format;
@@ -96,7 +111,7 @@ app.get("/", function handler (req, res) {
 });
 
 app.get("/metrics/service/:service", function handler(req,res){
-	dp = [];
+	var dp = [];
 	MongoClient.connect('mongodb://127.0.0.1:27017/service_graph', function(err, db) {
 		var collection = db.collection('servicemetrics');
 		var date = new Date() - 24 * 60 * 60 * 1000;
@@ -106,15 +121,17 @@ app.get("/metrics/service/:service", function handler(req,res){
 	  		},
 	  		service: req.params.service
 		}, function(err, cursor) {
-				cursor.toArray(function(err, docs){
-					for(i=0;i<docs.length;i++){
-						dp.push(docs[i]['avg_resp_ms']);
-					}
-					console.log(dp);
-					res.end(JSON.stringify(dp));
-				});
-          });
-	});
+      cursor.toArray(function(err, docs){
+        for(i=0;i<docs.length;i++){
+          dp.push(docs[i]['avg_resp_ms']);
+        }
+
+        dp = shrinkArray(dp);
+        console.log(dp);
+        res.end(JSON.stringify(dp));
+      });
+    });
+  });
 	res.writeHead(200,{'Content-Type':'text/plain'});
 });
 
@@ -162,6 +179,7 @@ app.get('/metrics/service/:service/dc/:dc', function(req, res) {
             var value = grouped_value[i];
             values.push(value.value/value.count);
           }
+          values = shrinkArray(values);
           res.end(JSON.stringify(values));
         }
       );
@@ -197,6 +215,7 @@ app.get('/metrics/service/:service/client/:client', function(req, res) {
             var value = grouped_value[i];
             values.push(value.value/value.count);
           }
+          values = shrinkArray(values);
           res.end(JSON.stringify(values));
         }
       );
