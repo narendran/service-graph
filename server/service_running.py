@@ -7,7 +7,7 @@ learningRate = 0.1
 db = Connection().service_graph
 runningMeanColl = db.runningMean
 coll = db.servicemetrics
-cursor1 = coll.find(tailable=True)
+cursor1 = coll.find({}, tailable=True)
 while cursor1.alive:
     try:
     	
