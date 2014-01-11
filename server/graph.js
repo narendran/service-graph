@@ -27,22 +27,18 @@ $.ajax({
   dataType: 'json',
   url: "/configs", 
   success: function(docs) {
-  console.log(docs);
-  docs.toArray(function(err, items) {
-      for(i=0;i<items.length;i++){
-        nodesList[items[i].serviceName] = {name:items[i].serviceName};
-        items[i].clients.toArray(function(err, clientList){
-          for(j=0;j<clientList.length;j++){
-            if(edgesList[items[i].serviceName]===undefined)
-              edgesList[items[i].serviceName]={}
-            edgesList[items[i].serviceName][clientList[j].service_name] = {};
+    console.log(docs)
+      for(i in docs){
+        nodesList[i] = {name:i};    
+          for(j=0;j<docs[i].clients.length;j++){
+            if(edgesList[i]===undefined)
+              edgesList[i]={}
+            edgesList[i][docs[i].clients[j].service_name] = {};
+            nodesList[docs[i].clients[j].service_name] = {name:docs[i].clients[j].service_name};
           }
-        });
-        console.log(nodesList);
-        console.log(edgesList);
       }
-      db.close();
-    })
+      console.log(nodesList);
+      console.log(edgesList);
   },
   async:false});
     

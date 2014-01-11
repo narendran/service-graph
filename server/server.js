@@ -20,7 +20,7 @@ client_sc.on("message", function (channel, message) {
 	    if(err) throw err;
 	    var collection = db.collection('serviceconfigs');
 	    msgJson = JSON.parse(message)	
-		collection.insert({'serviceName':msgJson.serviceName, 'version' : msgJson.version, 'clients' : msgJson.clients}, function(){}); 
+		collection.insert(msgJson, function(){}); 
 		if(globalIOSocket)
 			globalIOSocket.emit('serviceconfig', msgJson);
 	});
@@ -123,12 +123,13 @@ app.get("/configs", function handler(req,res){
 	MongoClient.connect('mongodb://127.0.0.1:27017/service_graph', function(err, db) {
 		var collection = db.collection('serviceconfigs');
 		collection.find().toArray(function(err, docs) {
+					var services = {}
 					for(i=0;i<docs.length;i++){
-						dp.push(docs[i]);
+						services[docs[i].service_name] = docs[i];
 					}
-					console.log(dp);
+					console.log(services);
 					res.writeHead(200,{"Content-Type" : "text/plain"});
-					res.end(JSON.stringify(dp));
+					res.end(JSON.stringify(services));
 				});
           });
 	});
@@ -263,5 +264,40 @@ app.get('/metrics/service/:service/dcs', function(req, res) {
           res.end(JSON.stringify(uniq_clients));
         });
       });
+    });
+});
+
+app.get('/metrics/service/:service/machine/:machine', function(req, res) {
+    console.log(req.params.service, req.params.dc);
+    res.writeHead(200,{'Content-Type':'application/json'});
+    //res.send('Hello world!');
+
+    MongoClient.connect('mongodb://127.0.0.1:27017/service_graph', function(err, db) {
+      var collection = db.collection('servicemetrics');
+      var timestamp24HoursAgo = new Date() - 24 * 60 * 60 * 1000;
+      collection.group(['timestamp'],
+        {'timestamp': {$gte: timestamp24HoursAgo},
+	  		 'service': req.params.service,
+         'instance': req.params.machine},
+        {'value': 0, 'count': 0},
+        function(obj, prev) {
+            prev.count += obj.calls;
+            prev.value += obj.total_resp_ms;
+        },
+        true,
+        function(err, grouped_value) {
+          if (err) {
+            console.error(err);
+          }
+          console.log(grouped_value);
+          var values = [];
+          for (var i = 0; i < grouped_value.length; i ++) {
+            var value = grouped_value[i];
+            values.push(value.value/value.count);
+          }
+          res.end(JSON.stringify(values));
+        }
+      );
+
     });
 });
