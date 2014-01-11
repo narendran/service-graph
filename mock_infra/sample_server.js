@@ -78,14 +78,6 @@ function statsRefresher() {
   } else {
     ownStats.avg_resp_ms = 0.0;
   }
-  if (logEntries.length > 0) {
-    for (var svc in clientStats) {
-      var stat = clientStats[svc];
-      console.log(stat);
-    }
-    console.log(ownStats);
-    // console.log(logEntries);
-  }
 
   for (var svc in clientStats) {
     var stat = clientStats[svc];
@@ -97,6 +89,15 @@ function statsRefresher() {
     mqClient.publish(CHANNEL_CLIENTSTATS, JSON.stringify(stat));
   }
   mqClient.publish(CHANNEL_SERVICESTATE, JSON.stringify(ownStats));
+
+  if (logEntries.length > 0) {
+    for (var svc in clientStats) {
+      var stat = clientStats[svc];
+      console.log(stat);
+    }
+    console.log(ownStats);
+    // console.log(logEntries);
+  }
 }
 
 function logRequest(resp_ms, client_requests, errors) {
