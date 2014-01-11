@@ -32,7 +32,7 @@ console.log(config);
 var mqClient = redis.createClient(null, '137.110.52.123');
 
 var ownStats = {
-  'instance': getPQDN(config.addr),
+  'instance': getHierAddr(config.addr),
   'service': config.service_name,
   'calls': 0,
   'total_resp_ms': 0,
@@ -135,7 +135,7 @@ function logRequest(resp_ms, client_requests, errors) {
         'service': client.service_name,
         'client': config.service_name + '/' + client.client_name,
         'service_instance': client.service_instance,
-        'client_instance': getPQDN(config.addr),
+        'client_instance': getHierAddr(config.addr),
         'calls': 0,
         'total_resp_ms': 0,
         'errors': 0,
@@ -185,7 +185,7 @@ function handleClient(client, seq, err, op, clientReqs) {
     clientReqs.push({
       'client_name': client.client_name,
       'service_name': client.service_name,
-      'service_instance': getPQDN(client.addr),
+      'service_instance': getHierAddr(client.addr),
       'resp_ms': new Date() - prevStart,
       'errors': ((d == null) ? 1 : 0)
     });
