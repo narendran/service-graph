@@ -220,15 +220,18 @@ app.get('/metrics/service/:service/clients', function(req, res) {
           $regex: req.params.service + '/.*'
         },
       },
-      {'fields': ['client']},
+      {'fields': ['client', 'service']},
       function(err, cursor) {
         cursor.toArray(function(err, clients) {
           var uniq_clients = (clients.map(function(x) {
-            return x['client'].split('/')[1];
+            return x['client'].split('/')[1] + ' :: ' + x['service'];
           })
           .filter(function(elem, index, self) {
             return self.indexOf(elem) == index;
-          }));
+          }))
+          .map(function(x) {
+            return {'client': x.split(' :: ')[0], 'service': x.split(' :: ')[1]};
+          });
 
           res.end(JSON.stringify(uniq_clients));
         });
