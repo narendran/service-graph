@@ -109,10 +109,10 @@ Highcharts.setOptions({
             }
         });
 
-dp = [];
 
-$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+$.getJSON( "/metrics/service/"+getParameterByName('SERVICE'), 
 	function( data ) {
+    var dp = [];
 		$.each( data, function( i, item ) {
 			dp.push(item);
 		});
@@ -128,8 +128,33 @@ $.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'),
         });
 	});
 
-$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+$.getJSON( "/metrics/service/"+getParameterByName('SERVICE') + "/dcs",
+	function( dcs ) {
+    $.each(dcs, function(i, item) {
+
+      $.getJSON( "/metrics/service/"+getParameterByName('SERVICE') + "/dc/" + item,
+        function( data ) {
+          var dp = [];
+          $.each( data, function( i, item ) {
+            dp.push(item);
+          });
+           $('#dc' + (i + 1) + '-container').highcharts({
+                  chart: {
+                      type: 'line'
+                  },
+                  series: [ {
+                      name: getParameterByName('SERVICE') + ' on ' + item.toUpperCase(),
+                      data: dp
+                  }]
+              });
+      });
+    });
+});
+
+/*
+$.getJSON( "/metrics/service/"+getParameterByName('SERVICE'), 
 	function( data ) {
+    var dp = [];
 		$.each( data, function( i, item ) {
 			dp.push(item);
 		});
@@ -145,8 +170,9 @@ $.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'),
         });
 	});
 
-$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+$.getJSON( "/metrics/service/"+getParameterByName('SERVICE'), 
 	function( data ) {
+    var dp = [];
 		$.each( data, function( i, item ) {
 			dp.push(item);
 		});
@@ -162,8 +188,9 @@ $.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'),
         });
 	});
 
-$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+$.getJSON( "/metrics/service/"+getParameterByName('SERVICE'), 
 	function( data ) {
+    var dp = [];
 		$.each( data, function( i, item ) {
 			dp.push(item);
 		});
@@ -179,8 +206,9 @@ $.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'),
         });
 	});
 
-$.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'), 
+$.getJSON( "/metrics/service/"+getParameterByName('SERVICE'), 
 	function( data ) {
+    var dp = [];
 		$.each( data, function( i, item ) {
 			dp.push(item);
 		});
@@ -196,6 +224,7 @@ $.getJSON( "/metrics/service?SERVICE="+getParameterByName('SERVICE'),
         });
 	});
 
+*/
 $(function () {
        
     });
