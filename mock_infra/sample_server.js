@@ -53,7 +53,7 @@ function purgeOldLogs() {
 
     ownStats.calls --;
     ownStats.total_resp_ms -= logEntry.resp_ms;
-    ownStats.errors -= logEntry.error;
+    ownStats.errors -= logEntry.errors;
 
     for (var i = 0; i < logEntry.client_requests.length; i ++) {
       var client = logEntry.client_requests[i];
@@ -64,7 +64,7 @@ function purgeOldLogs() {
       }
       stat.calls --;
       stat.total_resp_ms -= client.resp_ms;
-      stat.errors -= client.error;
+      stat.errors -= client.errors;
     }
 
     logEntries.shift();   // Remove from head of queue
@@ -99,18 +99,18 @@ function statsRefresher() {
   mqClient.publish(CHANNEL_SERVICESTATE, JSON.stringify(ownStats));
 }
 
-function logRequest(resp_ms, client_requests, error) {
+function logRequest(resp_ms, client_requests, errors) {
   var logEntry = {
     'timestamp': new Date(),
     'resp_ms': resp_ms,
     'client_requests': client_requests,
-    'error': error
+    'errors': errors
   };
 
   logEntries.push(logEntry);
   ownStats.calls ++;
   ownStats.total_resp_ms += resp_ms;
-  ownStats.errors += error;
+  ownStats.errors += errors;
 
   for (var i = 0; i < client_requests.length; i ++) {
     var client = client_requests[i];
@@ -128,7 +128,7 @@ function logRequest(resp_ms, client_requests, error) {
 
     stat.calls ++;
     stat.total_resp_ms += client.resp_ms;
-    stat.errors += client.error;
+    stat.errors += client.errors;
   }
 }
 
@@ -146,14 +146,21 @@ function handleClient(client, seq, err, op, clientReqs) {
     var strt = new Date();
     http.get(url, function(resp) {
       next(resp, strt);
+    }).on('error', function(err) {
+      console.log(err);
+      next(null, strt);
     });
   })
   .then(function(next, resp, prevStart) {
-    resp.setEncoding('utf8');
-    resp.on('data', function(d) {
-      op += d;
-      next(d, prevStart);
-    });
+    if (resp == null) {
+      next(null, prevStart);
+    } else {
+      resp.setEncoding('utf8');
+      resp.on('data', function(d) {
+        op += d;
+        next(d, prevStart);
+      });
+    }
   })
   .then(function(next, d, prevStart) {
     // res.write(d);
@@ -161,7 +168,7 @@ function handleClient(client, seq, err, op, clientReqs) {
     clientReqs.push({
       'service_name': client.service_name,
       'resp_ms': new Date() - prevStart,
-      'error': false
+      'errors': ((d == null) ? 1 : 0)
     });
     next(err);
   });
