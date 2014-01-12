@@ -1,0 +1,11 @@
+{
+  "service_name": "BazService",
+  "addr": {
+    "dc": "atl",
+    "host": "atl21",
+    "port": 4321
+  },
+  "error_thresh": 0.005,
+  "response_time_thresh_ms": 50,
+  "clients": []
+}

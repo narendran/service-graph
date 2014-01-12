@@ -5,7 +5,7 @@
     "host": "sd11",
     "port": 3503
   },
-  "error_thresh": 0.005,
-  "response_time_thresh_ms": 50,
+  "error_thresh": 0.10,
+  "response_time_thresh_ms": 80,
   "clients": []
 }
