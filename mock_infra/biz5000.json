@@ -5,6 +5,8 @@
     "host": "sf11",
     "port": 5000
   },
+  "error_thresh": 0.005,
+  "response_time_thresh_ms": 300,
   "clients": [
     {
       "client_name": "foo1",

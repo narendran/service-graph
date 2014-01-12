@@ -73,6 +73,16 @@ h2 {
 </body>
 
 <script>
+
+$.ajax({ 
+  dataType: 'json',
+  url: "/configs", 
+  success: function() {
+    services = arguments[0];
+    console.log(services);
+  },
+  async:false});
+
 Highcharts.setOptions({
         	title: {
                 text: getParameterByName('SERVICE') + " performance"
@@ -119,6 +129,20 @@ $.getJSON( "/metrics/service/"+getParameterByName('SERVICE'),
 			dp.push(item);
 		});
 		console.log(dp);
+
+
+    // Next few lines puts a RED dot when a line goes past threshold.
+          var upperBound = services[getParameterByName('SERVICE')]['response_time_thresh_ms'];
+          console.log(upperBound);
+          dp = dp.map(function(x) {
+            if (x >= upperBound) {
+              console.log('MISSED DEADLINE!!!');
+              return {'y': x, marker: {'fillColor': '#FF0000'}};
+            }
+            return x;
+          });
+
+
 		 $('#container').highcharts({
             chart: {
                 type: 'line'
@@ -174,6 +198,7 @@ $.getJSON( "/metrics/service/"+getParameterByName('SERVICE') + "/clients",
           $.each( data, function( i, item ) {
             dp.push(item);
           });
+
            $('#cli' + (i + 1) + '-container').highcharts({
                   chart: {
                       type: 'line'

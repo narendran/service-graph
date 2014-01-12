@@ -1,11 +1,11 @@
 var socket = io.connect('http://localhost');
       socket.on('serviceconfig', function (data) {
       console.log(data);
-      nodesList[data.service_name] = {name:data.service_name};
+      nodesList[data.service_name] = {name:data.service_name, respthresh:data.response_time_thresh_ms, errthresh:data.error_thresh};
       data.clients.forEach(function(x){
         var service_name = x.service_name;
         console.log(service_name);
-        nodesList[service_name] = {name:x.service_name}
+        nodesList[service_name] = {name:x.service_name};
         // if(edgesList[data.service_name]===undefined)
         //   edgesList[data.service_name] = {}
         // edgesList[data.service_name][service_name] = {directed: true};
@@ -16,10 +16,35 @@ var socket = io.connect('http://localhost');
         nodes : nodesList, 
         edges : edgesList 
       });
+
       globalRend.renderer.redraw();
     });
 
-    
+      socket.on('servicestate', function (data) {
+      console.log(data);
+      console.log(nodesList);
+      for(i in data){
+        nodesList[i]['error_rate'] = data[i].error_rate;
+        nodesList[i]['resp_ms'] = data[i].resp_ms;
+        if(nodesList[i]['errthresh'] && (data[i].error_rate - nodesList[i]['errthresh'] > 0)){
+            nodesList[i]['color'] = 'red';
+          } else 
+          if(nodesList[i]['respthresh'] && (nodesList[i]['respthresh']-data[i].resp_ms < 0)){
+            nodesList[i]['color'] = 'blue';
+          } else {
+            nodesList[i]['color'] = 'green';
+          }
+          
+      }
+      globalRend.graft({
+        nodes : nodesList, 
+        edges : edgesList 
+      });
+
+      console.log("Redrawing");
+      globalRend.renderer.redraw();
+    });
+
 
 nodesList = {}
 edgesList = {}
@@ -31,12 +56,13 @@ $.ajax({
   success: function(docs) {
     console.log(docs)
       for(i in docs){
-        nodesList[i] = {name:i};    
+        nodesList[i] = {name:i, respthresh:docs[i].response_time_thresh_ms, errthresh:docs[i].error_thresh};    
           for(j=0;j<docs[i].clients.length;j++){
             if(edgesList[i]===undefined)
               edgesList[i]={}
             edgesList[i][docs[i].clients[j].service_name] = {};
             nodesList[docs[i].clients[j].service_name] = {name:docs[i].clients[j].service_name};
+
           }
       }
       console.log(nodesList);
@@ -107,10 +133,13 @@ var globalRend;
           // draw a rectangle centered at pt
 
           var w = 50
-          ctx.fillStyle = (node.data.alone) ? "orange" : "black"
+          ctx.fillStyle = node.data.color || 'green'
+          
           ctx.fillRect(pt.x-w/2, pt.y-w/2, w,w)
           ctx.font="10px Georgia";
-          ctx.fillText(node.data.name,pt.x+w/2+10,pt.y);
+          ctx.fillText(node.data.name,pt.x+w/2,pt.y);
+          ctx.fillText((node.data.error_rate*100).toFixed(2)+"%",pt.x+w/2,pt.y+w/2+10);
+          ctx.fillText(node.data.resp_ms.toFixed(2)+" ms",pt.x+w/2,pt.y+w/2-10);
         })                            
       },
       
