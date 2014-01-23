@@ -1,0 +1,30 @@
+{
+  "service_name": "WebStoreService",
+  "addr": {
+    "dc": "atl",
+    "host": "atl21",
+    "port": 4321
+  },
+  "error_thresh": 0.02,
+  "response_time_thresh_ms": 500,
+  "clients": [
+    {
+      "client_name": "auth1",
+      "service_name": "AuthService",
+      "addr": {
+        "dc": "sd",
+        "host": "sd11",
+        "port": 3503
+      }
+    },
+    {
+      "client_name": "db1",
+      "service_name": "DBService",
+      "addr": {
+        "dc": "sf",
+        "host": "sf50",
+        "port": 3900
+      }
+    }
+  ]
+}

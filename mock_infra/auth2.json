@@ -1,0 +1,21 @@
+{
+  "service_name": "AuthService",
+  "addr": {
+    "dc": "sd",
+    "host": "sd11",
+    "port": 3503
+  },
+  "error_thresh": 0.01,
+  "response_time_thresh_ms": 120,
+  "clients": [
+    {
+      "client_name": "db1",
+      "service_name": "DBService",
+      "addr": {
+        "dc": "sf",
+        "host": "sf50",
+        "port": 3900
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "service_name": "AuthService",
+  "addr": {
+    "dc": "sf",
+    "host": "sf02",
+    "port": 3502
+  },
+  "error_thresh": 0.01,
+  "response_time_thresh_ms": 120,
+  "clients": [
+    {
+      "client_name": "db1",
+      "service_name": "DBService",
+      "addr": {
+        "dc": "atl",
+        "host": "atl09",
+        "port": 3501
+      }
+    }
+  ]
+}

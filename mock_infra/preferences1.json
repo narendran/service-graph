@@ -1,16 +1,16 @@
 {
-  "service_name": "HelloService",
+  "service_name": "PreferencesService",
   "addr": {
     "dc": "kc",
     "host": "kc01",
     "port": 3500
   },
-  "error_thresh": 0.005,
-  "response_time_thresh_ms": 275,
+  "error_thresh": 0.01,
+  "response_time_thresh_ms": 300,
   "clients": [
     {
-      "client_name": "foo1",
-      "service_name": "FooService",
+      "client_name": "db1",
+      "service_name": "DBService",
       "addr": {
         "dc": "atl",
         "host": "atl09",
@@ -18,8 +18,8 @@
       }
     },
     {
-      "client_name": "bar1",
-      "service_name": "BarService",
+      "client_name": "auth1",
+      "service_name": "AuthService",
       "addr": {
         "dc": "sf",
         "host": "sf02",

@@ -1,0 +1,11 @@
+{
+  "service_name": "DBService",
+  "addr": {
+    "dc": "atl",
+    "host": "atl09",
+    "port": 3501
+  },
+  "error_thresh": 0.005,
+  "response_time_thresh_ms": 60,
+  "clients": []
+}

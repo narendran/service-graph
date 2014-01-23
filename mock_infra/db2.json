@@ -1,9 +1,9 @@
 {
-  "service_name": "FooService",
+  "service_name": "DBService",
   "addr": {
-    "dc": "atl",
-    "host": "atl09",
-    "port": 3501
+    "dc": "sf",
+    "host": "sf50",
+    "port": 3900
   },
   "error_thresh": 0.005,
   "response_time_thresh_ms": 60,
