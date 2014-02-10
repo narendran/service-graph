@@ -136,10 +136,10 @@ var globalRend;
           ctx.fillStyle = node.data.color || 'green'
           
           ctx.fillRect(pt.x-w/2, pt.y-w/2, w,w)
-          ctx.font="10px Georgia";
+          ctx.font="15px Georgia";
           ctx.fillText(node.data.name,pt.x+w/2,pt.y);
           ctx.fillText((node.data.error_rate*100).toFixed(2)+"%",pt.x+w/2,pt.y+w/2+10);
-          ctx.fillText(node.data.resp_ms.toFixed(2)+" ms",pt.x+w/2,pt.y+w/2-10);
+          ctx.fillText(node.data.resp_ms+" ms",pt.x+w/2,pt.y+w/2-10);
         })                            
       },
       

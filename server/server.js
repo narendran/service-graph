@@ -29,7 +29,7 @@ function shrinkArray(dp) {
 var MongoClient = require('mongodb').MongoClient, format = require('util').format;
 MongoClient.connect('mongodb://127.0.0.1:27017/service_graph', function(err, db) {
 // Redis subscriber
-client_sc = redis.createClient(null, '137.110.52.123')
+client_sc = redis.createClient(null, 'localhost')
 client_sc.on("message", function (channel, message) {
     //console.log("Service_Config listener : channel " + channel + ": " + message + ". Writing to MongoDB");
 	    if(err) throw err;
@@ -42,7 +42,7 @@ client_sc.on("message", function (channel, message) {
 client_sc.subscribe("serviceconfig");
 
 // Redis subscriber
-client_sm = redis.createClient(null, '137.110.52.123')
+client_sm = redis.createClient(null, 'localhost')
 client_sm.on("message", function (channel, message) {
     //console.log("Service_Metrics listener : channel " + channel + ": " + message + ". Writing to MongoDB");
 	    if(err) throw err;
@@ -57,7 +57,7 @@ client_sm.on("message", function (channel, message) {
 });
 client_sm.subscribe("servicestats");
 
-client_cm = redis.createClient(null, '137.110.52.123')
+client_cm = redis.createClient(null,'localhost')
 client_cm.on("message", function (channel, message) {
    // console.log("Client_Metrics listener : channel " + channel + ": " + message + ". Writing to MongoDB");
 	    if(err) throw err;
@@ -212,6 +212,10 @@ app.get('/metrics/service/:service/client/:client', function(req, res) {
           }
           console.log(grouped_value);
           var values = [];
+          if(grouped_value==null){
+          	res.end('[]');
+          	return;
+          }
           for (var i = 0; i < grouped_value.length; i ++) {
             var value = grouped_value[i];
             values.push(value.value/value.count || 0.0);
@@ -375,7 +379,7 @@ function trackCurrentState() {
   var runningAvg = {};
   var counter = 0;
 
-  MongoClient.connect('mongodb://137.110.52.123:27017/service_graph', function(err, db) {
+  MongoClient.connect('mongodb://localhost:27017/service_graph', function(err, db) {
     var collection = db.collection('clientmetrics');
     var timestamp25HoursAgo = new Date() - 25 * 60 * 60 * 1000;
     var stream = collection.find({

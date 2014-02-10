@@ -29,7 +29,7 @@ config.clients = config.clients || [];
 
 console.log(config);
 
-var mqClient = redis.createClient(null, '137.110.52.123');
+var mqClient = redis.createClient(null, 'localhost');
 
 var ownStats = {
   'instance': getHierAddr(config.addr),
