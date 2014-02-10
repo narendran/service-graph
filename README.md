@@ -45,7 +45,7 @@ Steps :
 4. As and when a new tuple is pushed into the message queue, we calculate the running average of average response time and error rate.
 5. Now the infrastructure part is done, but to quickly get started, we have created a mock infrastructure under mock\_infra. To get the mock services up and running start all the services by executing "node sample\_server.js abc.js". Start all the services present under the mock\_infra directory (auth1.json, auth2.json ..) because as in any real-world scenario they are interconnected. Next, start the mock load generator by executing "python loadgen.py". 
 6. Start the main controller by executing "node server.js" under the server directory. Once started, you should be able to see your landing page in localhost:8000. If everything is good, you should see a landing page similar to the following :
-![alt tag](https://raw.github.com/narendran/service-graph/blob/master/snapshots/landing.png)
+![alt tag](https://raw2.github.com/narendran/service-graph/master/snapshots/landing.png)
 
 
 
